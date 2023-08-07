@@ -1,0 +1,56 @@
+function createSlidesFromSheetWithTitle() {
+  var sheetId = '1bY_YTv4NcfV_ir8k-aJXqSlK3_F7EUHWWRtTrYZHSHQ';
+  var slideId = '1LqgBUyUb0LGFyPflW-Fr60K5FjwyX-GTHbv_jY6G588';
+  var defaultWidth = 700; 
+  var defaultTop = 50; 
+  var defaultLeft = 50; 
+  var verticalSpacing = 150; 
+
+  var sheet = SpreadsheetApp.openById(sheetId).getActiveSheet();
+  var slide = SlidesApp.openById(slideId);
+
+  var data = sheet.getDataRange().getValues();
+
+  for (var i = 1; i < data.length; i++) {
+    var newSlide = slide.appendSlide(SlidesApp.PredefinedLayout.BLANK);
+
+    var title = data[i][1]; 
+    var titleBox = newSlide.insertTextBox(title);
+    titleBox.getText().getTextStyle().setBold(true);
+    titleBox.getText().getTextStyle().setFontSize(30);
+    titleBox.getBorder().setTransparent();
+    titleBox.setWidth(defaultWidth);
+    titleBox.setTop(defaultTop);
+    titleBox.setLeft(slide.getPageWidth() / 2 - defaultWidth / 2); 
+
+    var text = data[i][0]; 
+    var textBox = newSlide.insertTextBox(text);
+    textBox.getText().getTextStyle().setFontSize(18);
+    textBox.setWidth(defaultWidth);
+    textBox.setTop(titleBox.getTop() + titleBox.getHeight() + verticalSpacing); 
+    textBox.setLeft(slide.getPageWidth() / 2 - defaultWidth / 2); 
+    textBox.setTop(textBox.getTop() - 50); 
+
+    var keyword = data[i][2]; // Get the keyword from column 3
+    var imageUrl = searchImage(keyword); // Search for an image based on the keyword
+    if (imageUrl) {
+      var image = newSlide.insertImage(imageUrl); // Insert the image into the slide
+      image.setWidth(300); // Set the image width
+      image.setTop(textBox.getTop() - image.getHeight() - verticalSpacing); // Position the image above the text box
+      image.setLeft(slide.getPageWidth() - image.getWidth() - defaultLeft); // Position the image to the right
+    }
+  }
+}
+
+function searchImage(keyword) {
+  var key = ''; // Your Pixabay API key
+  var url = 'https://pixabay.com/api/?key=' + key + '&q=' + encodeURIComponent(keyword) + '&image_type=photo&per_page=3';
+
+  var response = UrlFetchApp.fetch(url);
+  var data = JSON.parse(response.getContentText());
+  if (data.hits && data.hits.length > 0) {
+    return data.hits[0].largeImageURL; // Return the URL of the first image
+  } else {
+    return null; // Return null if no images were found
+  }
+}
